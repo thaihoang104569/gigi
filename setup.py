@@ -7,15 +7,12 @@ setup(
     name="lora_diffusion",
     py_modules=["lora_diffusion"],
     version="0.1.7",
-    description="Low Rank Adaptation for Diffusion Models. Works with Stable Diffusion out-of-the-box.",
+    description="Low Rank Adaptation for Diffusion Models - DreamBooth Training & Inference",
     author="Simo Ryu",
     packages=find_packages(),
     entry_points={
         "console_scripts": [
             "lora_add = lora_diffusion.cli_lora_add:main",
-            "lora_pti = lora_diffusion.cli_lora_pti:main",
-            "lora_distill = lora_diffusion.cli_svd:main",
-            "lora_ppim = lora_diffusion.preprocess_files:main",
         ],
     },
     install_requires=[
