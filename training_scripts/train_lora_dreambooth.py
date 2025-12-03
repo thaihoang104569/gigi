@@ -970,33 +970,31 @@ def main(args):
 
     accelerator.wait_for_everyone()
 
-    # Create the pipeline using using the trained modules and save it.
+    # Save LoRA weights directly without creating full pipeline
     if accelerator.is_main_process:
-        pipeline = StableDiffusionPipeline.from_pretrained(
-            args.pretrained_model_name_or_path,
-            unet=accelerator.unwrap_model(unet),
-            text_encoder=accelerator.unwrap_model(text_encoder),
-            revision=args.revision,
-        )
-
-        print("\n\nLora TRAINING DONE!\n\n")
+        print("\n\nLora TRAINING DONE! Saving weights...\n\n")
+        
+        unwrapped_unet = accelerator.unwrap_model(unet)
+        unwrapped_text_encoder = accelerator.unwrap_model(text_encoder) if args.train_text_encoder else None
 
         if args.output_format == "pt" or args.output_format == "both":
-            save_lora_weight(pipeline.unet, args.output_dir + "/lora_weight.pt")
+            save_lora_weight(unwrapped_unet, args.output_dir + "/lora_weight.pt")
             if args.train_text_encoder:
                 save_lora_weight(
-                    pipeline.text_encoder,
+                    unwrapped_text_encoder,
                     args.output_dir + "/lora_weight.text_encoder.pt",
                     target_replace_module=["CLIPAttention"],
                 )
 
         if args.output_format == "safe" or args.output_format == "both":
             loras = {}
-            loras["unet"] = (pipeline.unet, {"CrossAttention", "Attention", "GEGLU"})
+            loras["unet"] = (unwrapped_unet, {"CrossAttention", "Attention", "GEGLU"})
             if args.train_text_encoder:
-                loras["text_encoder"] = (pipeline.text_encoder, {"CLIPAttention"})
+                loras["text_encoder"] = (unwrapped_text_encoder, {"CLIPAttention"})
 
             save_safeloras(loras, args.output_dir + "/lora_weight.safetensors")
+        
+        print(f"LoRA weights saved to {args.output_dir}")
 
         if args.push_to_hub:
             repo.push_to_hub(
