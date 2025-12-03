@@ -70,7 +70,7 @@ python training_scripts/train_lora_dreambooth.py \
   --lr_warmup_steps=0 \
   --max_train_steps=3000 \
   --lora_rank=4 \
-  --output_format="safetensors"
+  --output_format="safe"
 ```
 
 #### Training nâng cao (UNet + Text Encoder):
@@ -88,7 +88,7 @@ python training_scripts/train_lora_dreambooth.py \
   --color_jitter \
   --max_train_steps=2000 \
   --lora_rank=4 \
-  --output_format="safetensors"
+  --output_format="safe"
 ```
 
 ### 3. Test LoRA (Inference)
