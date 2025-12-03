@@ -1,49 +1,48 @@
-# LoRA Diffusion - DreamBooth Training & Inference
+# LoRA DreamBooth Training
 
-Low-Rank Adaptation (LoRA) for Stable Diffusion with DreamBooth fine-tuning. This simplified version focuses on training custom LoRA models and generating images before/after fine-tuning.
+Hệ thống training và inference LoRA (Low-Rank Adaptation) cho Stable Diffusion với DreamBooth fine-tuning.
 
-## What is LoRA?
+## Giới thiệu LoRA
 
-LoRA (Low-Rank Adaptation) is an efficient fine-tuning technique that:
-- Adds small trainable matrices to existing model layers
-- Keeps the base model frozen (saves memory)
-- Produces tiny weight files (1-6 MB vs 4-7 GB for full models)
-- Allows dynamic blending between base and fine-tuned behavior
+LoRA (Low-Rank Adaptation) là kỹ thuật fine-tuning hiệu quả:
+- Thêm các ma trận nhỏ có thể train vào các layer hiện có
+- Giữ nguyên base model (tiết kiệm bộ nhớ)
+- Tạo file weights nhỏ gọn (1-6 MB thay vì 4-7 GB)
+- Cho phép blend linh hoạt giữa base model và fine-tuned behavior
 
-## Features
+## Tính năng
 
-✅ **DreamBooth Training**: Fine-tune Stable Diffusion on your own images  
-✅ **Lightweight**: LoRA weights are only 1-6 MB  
-✅ **Flexible Inference**: Adjust LoRA influence from 0.0 (base) to 1.0 (full)  
-✅ **Textual Inversion**: Support for custom tokens like `<s1><s2>`  
-✅ **Easy Demo**: Simple scripts to compare before/after fine-tuning
+✅ **DreamBooth Training**: Fine-tune Stable Diffusion trên ảnh của bạn  
+✅ **Lightweight**: LoRA weights chỉ 1-6 MB  
+✅ **Flexible**: Điều chỉnh mức độ ảnh hưởng từ 0.0 đến 1.0  
+✅ **Textual Inversion**: Hỗ trợ custom tokens  
+✅ **Demo Scripts**: So sánh trước/sau fine-tuning
 
-## Installation
+## Cài đặt
 
 ```bash
-# Clone the repository
-git clone https://github.com/cloneofsimo/lora
-cd lora
+# Clone repository
+git clone https://github.com/thaihoang104569/gigi
+cd gigi
 
-# Install dependencies
+# Cài đặt dependencies
 pip install -r requirements.txt
 
-# Install package in development mode
+# Cài đặt package
 pip install -e .
 ```
 
-## Requirements
+## Yêu cầu
 
 - Python 3.8+
 - PyTorch 1.13+
-- CUDA GPU with 12GB+ VRAM (recommended)
-- See `requirements.txt` for full dependencies
+- CUDA GPU với 12GB+ VRAM (khuyến nghị)
 
-## Quick Start
+## Sử dụng
 
-### 1. Prepare Your Training Data
+### 1. Chuẩn bị dữ liệu training
 
-Organize your training images:
+Tổ chức ảnh training:
 ```
 my_training_data/
 ├── image1.jpg
@@ -52,11 +51,11 @@ my_training_data/
 └── ...
 ```
 
-Recommended: 5-20 images of your subject/style.
+Khuyến nghị: 5-20 ảnh của đối tượng/style của bạn.
 
-### 2. Train a LoRA Model (DreamBooth)
+### 2. Train LoRA Model
 
-#### Basic Training (UNet only):
+#### Training cơ bản (UNet only):
 ```bash
 python training_scripts/train_lora_dreambooth.py \
   --pretrained_model_name_or_path="runwayml/stable-diffusion-v1-5" \
@@ -74,7 +73,7 @@ python training_scripts/train_lora_dreambooth.py \
   --output_format="safetensors"
 ```
 
-#### Advanced Training (UNet + Text Encoder):
+#### Training nâng cao (UNet + Text Encoder):
 ```bash
 python training_scripts/train_lora_dreambooth.py \
   --pretrained_model_name_or_path="runwayml/stable-diffusion-v1-5" \
@@ -92,95 +91,79 @@ python training_scripts/train_lora_dreambooth.py \
   --output_format="safetensors"
 ```
 
-See `training_scripts/run_lora_db_unet_only.sh` and `training_scripts/run_lora_db_w_text.sh` for complete examples.
+### 3. Test LoRA (Inference)
 
-### 3. Test Your LoRA (Inference Demo)
-
-#### Quick Demo Script:
+#### Demo script nhanh:
 ```bash
 python demo_inference.py \
-  --lora_path="output/my_lora/lora.safetensors" \
+  --lora_path="output/my_lora/lora_weight.safetensors" \
   --prompt="a photo of sks person" \
   --alphas 0.0 0.5 1.0
 ```
 
-This generates:
-- `output/alpha_0.00.png` - Base model (before fine-tuning)
-- `output/alpha_0.50.png` - 50% LoRA influence
-- `output/alpha_1.00.png` - Full LoRA effect (after fine-tuning)
-- `output/comparison_grid.png` - Side-by-side comparison
+Kết quả:
+- `output/alpha_0.00.png` - Base model (trước fine-tuning)
+- `output/alpha_0.50.png` - 50% LoRA
+- `output/alpha_1.00.png` - Full LoRA (sau fine-tuning)
+- `output/comparison_grid.png` - Grid so sánh
 
-#### Python Code Example:
+#### Code Python:
 ```python
 import torch
 from diffusers import StableDiffusionPipeline
 from lora_diffusion import patch_pipe, tune_lora_scale
 
-# Load base Stable Diffusion
+# Load Stable Diffusion
 pipe = StableDiffusionPipeline.from_pretrained(
     "runwayml/stable-diffusion-v1-5",
     torch_dtype=torch.float16
 ).to("cuda")
 
-# Generate image BEFORE fine-tuning
+# Generate ảnh TRƯỚC fine-tuning
 image_before = pipe("a photo of sks person", num_inference_steps=50).images[0]
 image_before.save("before.png")
 
 # Apply LoRA weights
 patch_pipe(
     pipe,
-    "output/my_lora/lora.safetensors",
+    "output/my_lora/lora_weight.safetensors",
     patch_text=True,
     patch_ti=True,
     patch_unet=True
 )
 
-# Set LoRA strength (0.0 = off, 1.0 = full)
+# Set LoRA strength (0.0 = tắt, 1.0 = full)
 tune_lora_scale(pipe.unet, 1.0)
 tune_lora_scale(pipe.text_encoder, 1.0)
 
-# Generate image AFTER fine-tuning
+# Generate ảnh SAU fine-tuning
 image_after = pipe("a photo of sks person", num_inference_steps=50).images[0]
 image_after.save("after.png")
 ```
 
 ### 4. Jupyter Notebooks
 
-Interactive demos available in `scripts/`:
-- **`run_inference.ipynb`** - Text-to-image with LoRA
-- **`run_img2img.ipynb`** - Image-to-image with LoRA
+Demo tương tác trong `scripts/`:
+- **`run_inference.ipynb`** - Text-to-image với LoRA
+- **`run_img2img.ipynb`** - Image-to-image với LoRA
 
-### 5. Example LoRAs
+## Tham số Training quan trọng
 
-Pre-trained LoRAs for testing in `example_loras/`:
-- `lora_disney.safetensors` - Disney animation style
-- `lora_popart.safetensors` - Pop art style
-- `lora_illust.safetensors` - Illustration style
+| Tham số | Mô tả | Khuyến nghị |
+|---------|-------|-------------|
+| `--lora_rank` | Rank của ma trận LoRA (cao hơn = capacity cao hơn) | 4, 8, hoặc 16 |
+| `--learning_rate` | Learning rate cho UNet | 1e-4 |
+| `--learning_rate_text` | Learning rate cho text encoder | 5e-5 |
+| `--max_train_steps` | Tổng số bước training | 2000-5000 |
+| `--train_text_encoder` | Fine-tune cả text encoder | Khuyến nghị |
+| `--gradient_checkpointing` | Giảm memory usage | Cho VRAM hạn chế |
+| `--use_8bit_adam` | Dùng 8-bit Adam optimizer | Cho VRAM hạn chế |
 
-Try them:
-```bash
-python demo_inference.py \
-  --lora_path="example_loras/lora_disney.safetensors" \
-  --prompt="a cute baby lion in the style of <s1><s2>"
-```
+## Tính năng nâng cao
 
-## Key Training Parameters
-
-| Parameter | Description | Recommended |
-|-----------|-------------|-------------|
-| `--lora_rank` | LoRA matrix rank (higher = more capacity) | 4, 8, or 16 |
-| `--learning_rate` | UNet learning rate | 1e-4 |
-| `--learning_rate_text` | Text encoder learning rate | 5e-5 |
-| `--max_train_steps` | Total training steps | 2000-5000 |
-| `--train_text_encoder` | Also fine-tune text encoder | Recommended |
-| `--gradient_checkpointing` | Reduce memory usage | For limited VRAM |
-| `--use_8bit_adam` | Use 8-bit Adam optimizer | For limited VRAM |
-
-## Advanced Features
-
-### Adjust LoRA Strength Dynamically
+### Điều chỉnh LoRA Strength
 ```python
-# Test different influence levels
+# Test các mức độ ảnh hưởng khác nhau
 for alpha in [0.0, 0.3, 0.5, 0.7, 1.0]:
     tune_lora_scale(pipe.unet, alpha)
     tune_lora_scale(pipe.text_encoder, alpha)
@@ -188,7 +171,7 @@ for alpha in [0.0, 0.3, 0.5, 0.7, 1.0]:
     image.save(f"alpha_{alpha}.png")
 ```
 
-### Merge Multiple LoRAs
+### Merge nhiều LoRAs
 ```bash
 lora_add \
   path/to/lora1.safetensors \
@@ -199,16 +182,16 @@ lora_add \
 
 ### Textual Inversion Support
 
-LoRA files can include custom tokens (e.g., `<s1><s2>`, `<sks>`):
+LoRA files có thể bao gồm custom tokens (VD: `<s1><s2>`, `<sks>`):
 ```python
 prompt = "a portrait of <s1><s2> in cyberpunk style"
 ```
 
-The tokens are automatically loaded when using `patch_pipe()`.
+Tokens được tự động load khi dùng `patch_pipe()`.
 
-## Memory Optimization
+## Tối ưu bộ nhớ
 
-For GPUs with limited VRAM:
+Với GPU VRAM hạn chế:
 
 ```bash
 python training_scripts/train_lora_dreambooth.py \
@@ -219,79 +202,54 @@ python training_scripts/train_lora_dreambooth.py \
   ...
 ```
 
-For inference:
+Cho inference:
 ```python
-# Use half precision
+# Dùng half precision
 pipe = StableDiffusionPipeline.from_pretrained(
     model_id,
     torch_dtype=torch.float16
 ).to("cuda")
 ```
 
-## Project Structure
+## Cấu trúc Project
 
 ```
 lora/
-├── demo_inference.py              # Quick inference demo script
+├── demo_inference.py              # Demo inference script
 ├── requirements.txt               # Python dependencies
 ├── setup.py                       # Package installation
 ├── lora_diffusion/                # Core library
 │   ├── lora.py                    # LoRA implementation
-│   ├── utils.py                   # Image grid, utilities
+│   ├── utils.py                   # Utilities
 │   ├── lora_manager.py            # Multi-LoRA management
-│   ├── xformers_utils.py          # Memory optimization
-│   └── cli_lora_add.py            # LoRA merging CLI
+│   └── xformers_utils.py          # Memory optimization
 ├── training_scripts/              # Training scripts
 │   ├── train_lora_dreambooth.py   # Main DreamBooth trainer
 │   ├── run_lora_db_unet_only.sh   # Example: UNet only
 │   └── run_lora_db_w_text.sh      # Example: UNet + Text
-├── scripts/                       # Jupyter notebooks
-│   ├── run_inference.ipynb        # Text-to-image demo
-│   └── run_img2img.ipynb          # Img2img demo
-└── example_loras/                 # Pre-trained examples
-    ├── lora_disney.safetensors
-    ├── lora_popart.safetensors
-    └── lora_illust.safetensors
+└── scripts/                       # Jupyter notebooks
+    ├── run_inference.ipynb        # Text-to-image demo
+    └── run_img2img.ipynb          # Img2img demo
 ```
 
-## Troubleshooting
+## Xử lý lỗi
 
-**Q: Out of memory error during training?**  
-A: Use `--gradient_checkpointing`, `--use_8bit_adam`, reduce `--train_batch_size` to 1
+**Q: Out of memory khi training?**  
+A: Dùng `--gradient_checkpointing`, `--use_8bit_adam`, giảm `--train_batch_size` xuống 1
 
-**Q: Training is too slow?**  
-A: Install `xformers`: `pip install xformers`, add `--use_xformers` flag
+**Q: Training quá chậm?**  
+A: Cài `xformers`: `pip install xformers`, thêm flag `--use_xformers`
 
-**Q: LoRA effect is too weak/strong?**  
-A: Adjust with `tune_lora_scale()` or increase/decrease `--lora_rank`
+**Q: LoRA effect quá yếu/mạnh?**  
+A: Điều chỉnh bằng `tune_lora_scale()` hoặc tăng/giảm `--lora_rank`
 
-**Q: Images don't match training data?**  
-A: Train longer (`--max_train_steps`), use `--train_text_encoder`, or increase `--lora_rank`
-
-## Citation
-
-If you use this code, please cite:
-
-```bibtex
-@misc{ryu2023lora,
-  author = {Simo Ryu},
-  title = {Low-Rank Adaptation for Fast Text-to-Image Diffusion Fine-tuning},
-  year = {2023},
-  publisher = {GitHub},
-  howpublished = {\url{https://github.com/cloneofsimo/lora}}
-}
-```
+**Q: Ảnh không giống training data?**  
+A: Train lâu hơn (`--max_train_steps`), dùng `--train_text_encoder`, hoặc tăng `--lora_rank`
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License
 
-## Resources
+## Author
 
-- **Original Paper**: [LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)
-- **DreamBooth Paper**: [DreamBooth: Fine Tuning Text-to-Image Diffusion Models](https://arxiv.org/abs/2208.12242)
-- **Stable Diffusion**: [Hugging Face Diffusers](https://github.com/huggingface/diffusers)
-
-## Credits
-
-Original implementation by [Simo Ryu](https://github.com/cloneofsimo). This simplified version focuses on DreamBooth training and inference workflows.
+thaihoang104569
