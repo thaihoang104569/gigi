@@ -444,11 +444,28 @@ def parse_args(input_args=None):
     parser.add_argument(
         "--use_xformers", action="store_true", help="Whether or not to use xformers"
     )
+    parser.add_argument(
+        "--hf_token",
+        type=str,
+        default=None,
+        help="Hugging Face token to avoid rate limiting (get from HF_TOKEN env or pass directly)",
+    )
 
     if input_args is not None:
         args = parser.parse_args(input_args)
     else:
         args = parser.parse_args()
+
+    # Get HF token from environment if not provided
+    if args.hf_token is None:
+        args.hf_token = os.environ.get("HF_TOKEN", None)
+    
+    # Set HF token for huggingface_hub
+    if args.hf_token:
+        os.environ["HF_TOKEN"] = args.hf_token
+        print("Using Hugging Face token (avoids rate limiting)")
+    else:
+        print("WARNING: No HF token found. May hit rate limits. Set HF_TOKEN env or use --hf_token")
 
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
@@ -532,6 +549,7 @@ def main(args):
                 resume_download=True,
                 force_download=False,
                 low_cpu_mem_usage=True,
+                token=args.hf_token,
             )
             pipeline.set_progress_bar_config(disable=True)
 
@@ -578,6 +596,7 @@ def main(args):
             revision=args.revision,
             resume_download=True,
             force_download=False,
+            token=args.hf_token,
         )
     elif args.pretrained_model_name_or_path:
         tokenizer = CLIPTokenizer.from_pretrained(
@@ -586,6 +605,7 @@ def main(args):
             revision=args.revision,
             resume_download=True,
             force_download=False,
+            token=args.hf_token,
         )
 
     # Load models and create wrapper for stable diffusion
@@ -596,6 +616,7 @@ def main(args):
         resume_download=True,
         force_download=False,
         low_cpu_mem_usage=True,
+        token=args.hf_token,
     )
     vae = AutoencoderKL.from_pretrained(
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
@@ -604,6 +625,7 @@ def main(args):
         resume_download=True,
         force_download=False,
         low_cpu_mem_usage=True,
+        token=args.hf_token,
     )
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path,
@@ -612,6 +634,7 @@ def main(args):
         resume_download=True,
         force_download=False,
         low_cpu_mem_usage=True,
+        token=args.hf_token,
     )
     unet.requires_grad_(False)
     unet_lora_params, _ = inject_trainable_lora(
@@ -954,6 +977,7 @@ def main(args):
                             resume_download=True,
                             force_download=False,
                             low_cpu_mem_usage=True,
+                            token=args.hf_token,
                         )
 
                         filename_unet = (

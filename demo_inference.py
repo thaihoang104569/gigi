@@ -7,6 +7,7 @@ Usage:
 """
 
 import argparse
+import os
 import torch
 from diffusers import StableDiffusionPipeline
 from lora_diffusion import patch_pipe, tune_lora_scale, image_grid
@@ -70,8 +71,24 @@ def main():
         default="cuda" if torch.cuda.is_available() else "cpu",
         help="Device to run inference on"
     )
+    parser.add_argument(
+        "--hf_token",
+        type=str,
+        default=None,
+        help="Hugging Face token to avoid rate limiting (get from HF_TOKEN env or pass directly)"
+    )
     
     args = parser.parse_args()
+    
+    # Get HF token from environment if not provided
+    if args.hf_token is None:
+        args.hf_token = os.environ.get("HF_TOKEN", None)
+    
+    if args.hf_token:
+        os.environ["HF_TOKEN"] = args.hf_token
+        print("Using Hugging Face token (avoids rate limiting)")
+    else:
+        print("WARNING: No HF token. May hit rate limits. Set HF_TOKEN env or use --hf_token")
     
     # Create output directory
     output_dir = Path(args.output_dir)
@@ -85,7 +102,8 @@ def main():
         resume_download=True,   # Tiếp tục download nếu bị ngắt
         force_download=False,   # Không download lại nếu đã có
         use_safetensors=True,   # Ưu tiên safetensors load nhanh hơn
-        low_cpu_mem_usage=True  # Giảm RAM khi load
+        low_cpu_mem_usage=True, # Giảm RAM khi load
+        token=args.hf_token,    # Dùng token để tránh rate limit
     ).to(args.device)
     
     print(f"Applying LoRA weights from: {args.lora_path}")
