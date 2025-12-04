@@ -107,12 +107,6 @@ python training_scripts/train_lora_dreambooth.py \
 - `--learning_rate_text=5e-5`: LR thấp hơn cho text encoder
 - `--center_crop`: Focus vào center (mặt)
 - `--max_train_steps=6000`: Train lâu hơn với text encoder
-- Thay `uniquename` bằng tên unique của bạn (VD: `thaihoang_cs331`)
-
-**Lưu ý về thời gian:**
-- UNet only (rank 8, 5000 steps): ~1-1.5 giờ
-- UNet + Text (rank 16, 6000 steps): ~2.5-3 giờ
-- Kaggle cho 9 giờ → Có thể train multiple runs hoặc thử rank cao hơn
 
 ### 3. Test LoRA (Inference)
 
