@@ -529,6 +529,9 @@ def main(args):
                 torch_dtype=torch_dtype,
                 safety_checker=None,
                 revision=args.revision,
+                resume_download=True,
+                force_download=False,
+                low_cpu_mem_usage=True,
             )
             pipeline.set_progress_bar_config(disable=True)
 
@@ -573,12 +576,16 @@ def main(args):
         tokenizer = CLIPTokenizer.from_pretrained(
             args.tokenizer_name,
             revision=args.revision,
+            resume_download=True,
+            force_download=False,
         )
     elif args.pretrained_model_name_or_path:
         tokenizer = CLIPTokenizer.from_pretrained(
             args.pretrained_model_name_or_path,
             subfolder="tokenizer",
             revision=args.revision,
+            resume_download=True,
+            force_download=False,
         )
 
     # Load models and create wrapper for stable diffusion
@@ -586,16 +593,25 @@ def main(args):
         args.pretrained_model_name_or_path,
         subfolder="text_encoder",
         revision=args.revision,
+        resume_download=True,
+        force_download=False,
+        low_cpu_mem_usage=True,
     )
     vae = AutoencoderKL.from_pretrained(
         args.pretrained_vae_name_or_path or args.pretrained_model_name_or_path,
         subfolder=None if args.pretrained_vae_name_or_path else "vae",
         revision=None if args.pretrained_vae_name_or_path else args.revision,
+        resume_download=True,
+        force_download=False,
+        low_cpu_mem_usage=True,
     )
     unet = UNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path,
         subfolder="unet",
         revision=args.revision,
+        resume_download=True,
+        force_download=False,
+        low_cpu_mem_usage=True,
     )
     unet.requires_grad_(False)
     unet_lora_params, _ = inject_trainable_lora(
@@ -935,6 +951,9 @@ def main(args):
                                 text_encoder, **extra_args
                             ),
                             revision=args.revision,
+                            resume_download=True,
+                            force_download=False,
+                            low_cpu_mem_usage=True,
                         )
 
                         filename_unet = (

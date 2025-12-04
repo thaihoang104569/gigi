@@ -81,7 +81,11 @@ def main():
     pipe = StableDiffusionPipeline.from_pretrained(
         args.model_id,
         torch_dtype=torch.float16 if args.device == "cuda" else torch.float32,
-        safety_checker=None
+        safety_checker=None,
+        resume_download=True,   # Tiếp tục download nếu bị ngắt
+        force_download=False,   # Không download lại nếu đã có
+        use_safetensors=True,   # Ưu tiên safetensors load nhanh hơn
+        low_cpu_mem_usage=True  # Giảm RAM khi load
     ).to(args.device)
     
     print(f"Applying LoRA weights from: {args.lora_path}")
